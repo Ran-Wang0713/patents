@@ -2,46 +2,46 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/app.py",
+      "src": "app.py",
       "use": "@vercel/python"
     },
     {
-      "src": "backend/import_api.py",
+      "src": "import_api.py",
       "use": "@vercel/python"
     },
     {
-      "src": "backend/network_visualization.py",
+      "src": "network_visualization.py",
       "use": "@vercel/python"
     },
     {
-      "src": "backend/trend_prediction.py",
+      "src": "trend_prediction.py",
       "use": "@vercel/python"
     },
     {
-      "src": "frontend/index.html",
+      "src": "index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/import/(.*)",
-      "dest": "backend/import_api.py"
+      "dest": "import_api.py"
     },
     {
       "src": "/api/network/(.*)",
-      "dest": "backend/network_visualization.py"
+      "dest": "network_visualization.py"
     },
     {
       "src": "/api/trend/(.*)",
-      "dest": "backend/trend_prediction.py"
+      "dest": "trend_prediction.py"
     },
     {
       "src": "/api/(.*)",
-      "dest": "backend/app.py"
+      "dest": "app.py"
     },
     {
       "src": "/",
-      "dest": "frontend/index.html"
+      "dest": "index.html"
     }
   ]
 }
