@@ -20,36 +20,28 @@
     {
       "src": "frontend/index.html",
       "use": "@vercel/static"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(patents|patent|domain-statistics|trend-analysis|applicant-ranking|ipc-analysis|similar-patents)",
-      "dest": "backend/app.py"
-    },
-    {
-      "src": "/api/import/(excel|history)",
+      "src": "/api/import/(.*)",
       "dest": "backend/import_api.py"
     },
     {
-      "src": "/api/network/(get_data|get_domains)",
+      "src": "/api/network/(.*)",
       "dest": "backend/network_visualization.py"
     },
     {
-      "src": "/api/trend/(predict)",
+      "src": "/api/trend/(.*)",
       "dest": "backend/trend_prediction.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/app.py"
     },
     {
       "src": "/",
       "dest": "frontend/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
     }
   ]
 }
