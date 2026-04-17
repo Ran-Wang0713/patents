@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能专利分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            width: 250px;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .nav-link {
+            color: white !important;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .section {
+            display: none;
+        }
+        #dashboard {
+            display: block;
+        }
+        .main-chart {
+            height: 500px;
+        }
+        .side-chart {
+            height: 400px;
+        }
+        /* 新增：文件上传样式优化 */
+        .upload-area {
+            border: 2px dashed #ced4da;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background-color: #f9fafb;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background-color: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1);
+        }
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .form-card h5 {
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .alert-info {
+            border-radius: 8px;
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #0050b3;
+        }
+        .progress {
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            border-radius: 8px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 侧边栏 - 新增三个导航项 -->
+        <div class="sidebar">
+            <div class="p-3">
+                <h4 class="text-center mb-4">
+                    <i class="bi bi-graph-up"></i><br>专利分析平台
+                </h4>
+                <div class="nav flex-column">
+                    <a class="nav-link active" href="#" onclick="showSection('dashboard', event)">
+                        <i class="bi bi-speedometer2"></i> 数据看板
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('search', event)">
+                        <i class="bi bi-search"></i> 专利检索
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('import', event)">
+                        <i class="bi bi-upload"></i> 数据导入
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('network', event)">
+                        <i class="bi bi-diagram-3"></i> 可视化网络
+                    </a>
+                    <a class="nav-link" href="#" onclick="showSection('forecast', event)">
+                        <i class="bi bi-graph-up-arrow"></i> 趋势预测
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 数据看板 -->
+            <div id="dashboard" class="section">
+                <h3 class="mb-4"><i class="bi bi-speedometer2"></i> 数据概览</h3>
+                
+                <!-- 统计卡片 - 调整为3列布局 -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <h2 id="total-patents" class="text-primary">463</h2>
+                            <p class="text-muted">总专利数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <h2 id="total-applicants" class="text-success">331</h2>
+                            <p class="text-muted">申请人数量</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <h2 id="total-domains" class="text-warning">7</h2>
+                            <p class="text-muted">技术领域</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 主图表区域 - 技术领域分布 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-pie-chart"></i> 技术领域分布</h5>
+                                <div id="domainChart" class="main-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部双列布局 -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-trophy"></i> Top 10 申请人排名</h5>
+                                <div id="applicantChart" class="side-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5><i class="bi bi-tags"></i> 专利类型分布</h5>
+                                <div id="typeChart" class="side-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 专利检索 -->
+            <div id="search" class="section">
+                <h3 class="mb-4"><i class="bi bi-search"></i> 专利检索</h3>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="keyword" placeholder="关键词搜索">
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="domain">
+                                    <option value="">所有领域</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-primary w-100" onclick="searchPatents()">
+                                    <i class="bi bi-search"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>公开号</th>
+                                        <th>标题</th>
+                                        <th>公开日</th>
+                                        <th>技术领域</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="results"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span id="result-info" class="text-muted">共 0 条记录</span>
+                            <nav>
+                                <ul class="pagination mb-0" id="pagination"></ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增：数据导入模块 -->
+            <div id="import" class="section">
+                <h3 class="mb-4"><i class="bi bi-upload"></i> 数据导入</h3>
+                
+                <!-- 批量导入和单个导入左右分栏 -->
+                <div class="row g-4">
+                    <!-- 批量导入专利数据 -->
+                    <div class="col-md-6">
+                        <div class="form-card h-100">
+                            <h5>批量导入专利数据</h5>
+                            <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+                                <input type="file" id="file-upload" accept=".xlsx,.csv,.json" style="display: none;" onchange="handleFileSelect(event)">
+                                <div class="upload-icon"><i class="bi bi-cloud-upload"></i></div>
+                                <p class="mb-2">点击或拖拽文件至此处上传</p>
+                                <p class="text-muted small">支持格式：Excel (.xlsx)、CSV (.csv)、JSON (.json)</p>
+                            </div>
+                            
+                            <div id="file-info" class="mb-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <span id="file-name"></span> (<span id="file-size"></span>)
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="domain-select" class="form-label">选择技术领域</label>
+                                <select class="form-select" id="domain-select">
+                                    <option value="1">人工智能</option>
+                                    <option value="2">区块链</option>
+                                    <option value="3">大数据</option>
+                                    <option value="4">云计算</option>
+                                    <option value="5">5G</option>
+                                    <option value="6">量子计算</option>
+                                    <option value="7">物联网</option>
+                                </select>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" onclick="uploadFile()" id="upload-btn" disabled>
+                                    <i class="bi bi-upload"></i> 开始导入
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="resetUpload()">
+                                    <i class="bi bi-x"></i> 重置
+                                </button>
+                            </div>
+                            
+                            <!-- 导入进度 -->
+                            <div id="upload-progress" class="mt-4" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar" id="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <p class="mt-2 text-center" id="progress-text">导入中... 0%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 单个数据信息导入 -->
+                    <div class="col-md-6">
+                        <div class="form-card h-100">
+                            <h5>单个数据信息导入</h5>
+                            <form id="single-import-form">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="patent-number" class="form-label">专利号 *</label>
+                                        <input type="text" class="form-control" id="patent-number" placeholder="例如: CN202310123456.7" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="patent-title" class="form-label">专利名称 *</label>
+                                        <input type="text" class="form-control" id="patent-title" placeholder="例如: 基于人工智能的数据处理方法" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="technology-domain" class="form-label">技术领域 *</label>
+                                        <select class="form-select" id="technology-domain" required>
+                                            <option value="">请选择技术领域</option>
+                                            <option value="1">人工智能</option>
+                                            <option value="2">区块链</option>
+                                            <option value="3">大数据</option>
+                                            <option value="4">云计算</option>
+                                            <option value="5">5G</option>
+                                            <option value="6">量子计算</option>
+                                            <option value="7">物联网</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="application-year" class="form-label">申请年份 *</label>
+                                        <input type="text" class="form-control" id="application-year" placeholder="例如: 2023" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="impact-index" class="form-label">影响力指数 (0.0-1.0)</label>
+                                        <input type="number" class="form-control" id="impact-index" min="0" max="1" step="0.1" placeholder="例如: 0.8">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="applicant" class="form-label">申请人/机构</label>
+                                        <input type="text" class="form-control" id="applicant" placeholder="例如: 某某科技有限公司">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="citation-list" class="form-label">引用专利列表 (多个专利号用逗号分隔)</label>
+                                        <textarea class="form-control" id="citation-list" rows="2" placeholder="例如: CN202210123456.7, CN20210654321.0"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="patent-abstract" class="form-label">专利摘要 (可选)</label>
+                                        <textarea class="form-control" id="patent-abstract" rows="3" placeholder="请输入专利摘要..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-primary" onclick="importSinglePatent()">
+                                            <i class="bi bi-plus"></i> 导入单个专利
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 导入历史 -->
+                <div class="form-card mt-4">
+                    <h5><i class="bi bi-clock-history"></i> 导入历史</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>导入时间</th>
+                                    <th>文件名</th>
+                                    <th>数据量</th>
+                                    <th>技术领域</th>
+                                    <th>类型</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-history-body">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增：趋势预测模块 -->
+            <div id="forecast" class="section">
+                <h3 class="mb-4"><i class="bi bi-graph-up-arrow"></i> 趋势预测</h3>
+                
+                <div class="form-card mb-4">
+                    <h5>技术趋势分析</h5>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="trend-domain" class="form-label">选择技术领域</label>
+                                <select class="form-select" id="trend-domain">
+                                    <option value="人工智能">人工智能</option>
+                                    <option value="区块链">区块链</option>
+                                    <option value="大数据">大数据</option>
+                                    <option value="云计算">云计算</option>
+                                    <option value="5G">5G</option>
+                                    <option value="量子计算">量子计算</option>
+                                    <option value="物联网">物联网</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="forecast-years" class="form-label">预测年份</label>
+                                <select class="form-select" id="forecast-years">
+                                    <option value="1">1年</option>
+                                    <option value="2">2年</option>
+                                    <option value="3">3年</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="predictTrend()">
+                                <i class="bi bi-chart-line"></i> 开始预测
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="trend-result" class="border rounded p-4" style="display: none;">
+                                <h6>预测结果</h6>
+                                <div class="mb-2">
+                                    <strong>趋势等级：</strong>
+                                    <span id="trend-level" class="badge bg-success">高速增长</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>最终得分：</strong>
+                                    <span id="final-score">95</span>
+                                </div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="font-weight-bold">技术热度</div>
+                                            <div id="tech-heat-score">90</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="font-weight-bold">数量趋势</div>
+                                            <div id="quantity-score">85</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-center">
+                                            <div class="font-weight-bold">创新活力</div>
+                                            <div id="innovation-score">80</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 趋势图表 -->
+                    <div class="mt-4">
+                        <h6>专利数量趋势</h6>
+                        <div id="trend-chart" style="height: 600px;"></div>
+                    </div>
+                    
+
+                </div>
+            </div>
+
+            <!-- 可视化网络 -->
+            <div id="network" class="section">
+                <h3 class="mb-4"><i class="bi bi-diagram-3"></i> 可视化网络</h3>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="network-domain" class="form-label">选择技术领域</label>
+                                    <select class="form-select" id="network-domain">
+                                        <option value="0">全领域</option>
+                                        <option value="1">人工智能</option>
+                                        <option value="2">区块链</option>
+                                        <option value="3">大数据</option>
+                                        <option value="4">云计算</option>
+                                        <option value="5">5G</option>
+                                        <option value="6">量子计算</option>
+                                        <option value="7">物联网</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="network-level" class="form-label">根节点数量</label>
+                                    <select class="form-select" id="network-level">
+                                        <option value="50">50个根节点</option>
+                                        <option value="100">100个根节点</option>
+                                        <option value="all">全部根节点</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4" style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-primary w-100" onclick="generateNetwork()">
+                                    <i class="bi bi-diagram-3"></i> 生成网络
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 网络图表 -->
+                        <div class="mt-4">
+                            <h6>专利关联网络分析</h6>
+                            <div id="network-chart" style="height: 800px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 专利详情模态框 -->
+    <div class="modal fade" id="detailModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">专利详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        // 配置
+        const API_BASE = 'http://127.0.0.1:5000';
+        let currentPage = 1;
+        const pageSize = 10;
+        let selectedFile = null;
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
+            loadDashboardData();
+            loadDomainOptions();
+            loadNetworkDomainOptions();
+            initCharts();
+            // 初始化新增模块的图表
+            initNetworkChart();
+            initForecastChart();
+            // 加载导入历史
+            loadImportHistory();
+        });
+
+        // 显示不同部分
+        function showSection(sectionId, event) {
+            // 阻止默认行为，防止页面跳转
+            if (event) {
+                event.preventDefault();
+            }
+            
+            // 隐藏所有部分
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // 显示选中部分
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // 更新导航状态
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            // 修复事件对象兼容问题
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // 手动查找对应的导航链接并激活
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    if (link.getAttribute('onclick').includes(sectionId)) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            // 加载数据
+            if (sectionId === 'dashboard') {
+                loadDashboardData();
+            } else if (sectionId === 'charts') {
+                loadChartsData();
+            } else if (sectionId === 'import') {
+                // 加载导入历史记录
+                loadImportHistory();
+            } else if (sectionId === 'network') {
+                // 加载网络领域选项
+                loadNetworkDomainOptions();
+            } else if (sectionId === 'forecast' && window.forecastChart) {
+                // 重新渲染预测图表
+                generateForecast();
+            }
+        }
+
+        // 加载数据看板
+        async function loadDashboardData() {
+            try {
+                console.log('开始加载看板数据...');
+                
+                const [domainRes, applicantRes, patentsRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/domain-statistics`),
+                    fetch(`${API_BASE}/api/applicant-ranking?limit=10`),
+                    fetch(`${API_BASE}/api/patents?size=100`)
+                ]);
+
+                if (!domainRes.ok || !applicantRes.ok || !patentsRes.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const [domainData, applicantData, patentsData] = await Promise.all([
+                    domainRes.json(),
+                    applicantRes.json(),
+                    patentsRes.json()
+                ]);
+
+                console.log('数据加载成功');
+
+                // 更新统计卡片
+                updateStats(domainData);
+                
+                // 更新图表
+                updateDomainChart(domainData);
+                updateApplicantChart(applicantData);
+                updateTypeChart(patentsData.patents);
+
+            } catch (error) {
+                console.error('加载失败:', error);
+                // 使用默认数据
+                updateDefaultData();
+            }
+        }
+
+        // 更新统计信息
+        function updateStats(domainData) {
+            let totalPatents = 0;
+            let totalApplicants = 0;
+
+            domainData.forEach(domain => {
+                totalPatents += domain.patent_count || 0;
+                totalApplicants += domain.applicant_count || 0;
+            });
+
+            document.getElementById('total-patents').textContent = totalPatents.toLocaleString();
+            document.getElementById('total-applicants').textContent = totalApplicants.toLocaleString();
+        }
+
+        // 使用默认数据
+        function updateDefaultData() {
+            document.getElementById('total-patents').textContent = '463';
+            document.getElementById('total-applicants').textContent = '331';
+            
+            // 默认技术领域数据
+            const defaultDomainData = [
+                {domain_name: '5G', patent_count: 85},
+                {domain_name: '物联网', patent_count: 72},
+                {domain_name: '量子计算', patent_count: 45},
+                {domain_name: '云计算', patent_count: 68},
+                {domain_name: '大数据', patent_count: 91},
+                {domain_name: '人工智能', patent_count: 78},
+                {domain_name: '区块链', patent_count: 24}
+            ];
+            
+            updateDomainChart(defaultDomainData);
+        }
+
+        // 初始化图表
+        function initCharts() {
+            window.domainChart = echarts.init(document.getElementById('domainChart'));
+            window.applicantChart = echarts.init(document.getElementById('applicantChart'));
+            window.typeChart = echarts.init(document.getElementById('typeChart'));
+            window.ipcChart = echarts.init(document.getElementById('ipcChart') || document.createElement('div'));
+        }
+
+        // 初始化网络可视化图表
+        function initNetworkChart() {
+            window.networkChart = echarts.init(document.getElementById('networkChart'));
+        }
+
+        // 初始化趋势预测图表
+        function initForecastChart() {
+            window.forecastChart = echarts.init(document.getElementById('forecastChart'));
+        }
+        
+        // 趋势预测 - 最终修复版（100%可运行）
+        async function predictTrend() {
+            // 1. 安全获取DOM元素，避免空指针
+            const domainSelect = document.getElementById('trend-domain');
+            const yearSelect = document.getElementById('forecast-years');
+            
+            if (!domainSelect || !yearSelect) {
+                alert("页面元素加载异常，请刷新页面重试");
+                return;
+            }
+            
+            const domainId = domainSelect.value;
+            const forecastYears = parseInt(yearSelect.value) || 1;
+            
+            console.log("=== 趋势预测请求调试 ===");
+            console.log("请求URL:", "http://127.0.0.1:5005/api/trend/predict");
+            console.log("请求参数:", { domain_id: domainId, forecast_years: forecastYears });
+            
+            try {
+                // 2. 发起请求，增加超时控制
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+                
+                const response = await fetch("http://127.0.0.1:5005/api/trend/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        domain_id: domainId,
+                        forecast_years: forecastYears
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                console.log("响应状态码:", response.status);
+                
+                // 3. 处理响应
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ msg: `HTTP ${response.status}` }));
+                    throw new Error(errorData.msg || `请求失败，状态码：${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log("后端返回完整数据:", data);
+                
+                if (data.code === 200) {
+                    // 4. 成功后显示结果
+                    document.getElementById('trend-result').style.display = 'block';
+                    document.getElementById('trend-level').textContent = data.data.trend_level;
+                    document.getElementById('final-score').textContent = data.data.final_score.toFixed(2);
+                    document.getElementById('tech-heat-score').textContent = data.data.tech_heat_score.toFixed(2);
+                    document.getElementById('quantity-score').textContent = data.data.quantity_score.toFixed(2);
+                    document.getElementById('innovation-score').textContent = data.data.innovation_score.toFixed(2);
+                    
+                    // 生成趋势图表
+                    generateTrendChart(data.data);
+                    
+                    // 示例：弹出成功提示，可根据你的页面结构修改
+                    alert(`✅ 预测成功！\n技术领域：${domainId}\n预测年份：${forecastYears}年\n趋势等级：${data.data.trend_level}\n综合得分：${data.data.final_score}`);
+                } else {
+                    throw new Error(data.msg || "预测失败，未知错误");
+                }
+            } catch (error) {
+                console.error("=== 捕获到的错误详情 ===");
+                console.error("错误名称:", error.name);
+                console.error("错误信息:", error.message);
+                console.error("错误堆栈:", error.stack);
+                
+                // 5. 友好错误提示
+                let errorMsg = "❌ 预测失败：\n";
+                
+                if (error.name === "AbortError") {
+                    errorMsg += "请求超时，请检查后端服务是否正常运行";
+                } else if (error.message.includes("Failed to fetch")) {
+                    errorMsg += "无法连接到后端服务，请确认：\n1. 后端服务已启动（5005端口）\n2. 浏览器未开启代理/VPN\n3. 防火墙未拦截5005端口";
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                alert(errorMsg);
+            }
+        }
+
+
+        
+        // 生成趋势图表
+        function generateTrendChart(data) {
+            const trendChart = echarts.init(document.getElementById('trend-chart'));
+            
+            // 准备数据
+            const years = data.years || [];
+            const historicalData = data.historical_data || [];
+            const futureForecasts = data.future_forecasts || [];
+            
+            // 计算2026年以前的缺失值
+            const currentYear = 2026;
+            let lastHistoricalYear = 0;
+            if (years.length > 0) {
+                lastHistoricalYear = years[years.length - 1];
+            }
+            
+            // 生成历史年份和数据
+            const allYears = [...years];
+            const allData = [...historicalData];
+            
+            // 预测2026年以前的缺失值（如果有）
+            const missingYears = [];
+            const missingData = [];
+            if (lastHistoricalYear > 0 && lastHistoricalYear < currentYear) {
+                // 计算预测值
+                for (let year = lastHistoricalYear + 1; year < currentYear; year++) {
+                    missingYears.push(year);
+                    // 使用简单的线性预测
+                    if (historicalData.length >= 2) {
+                        const growthRate = (historicalData[historicalData.length - 1] - historicalData[0]) / historicalData.length;
+                        const predictedValue = historicalData[historicalData.length - 1] + growthRate * (year - lastHistoricalYear);
+                        missingData.push(Math.max(0, Math.round(predictedValue)));
+                    } else if (historicalData.length === 1) {
+                        missingData.push(historicalData[0]);
+                    } else {
+                        missingData.push(0);
+                    }
+                }
+                
+                // 添加到年份和数据数组
+                allYears.push(...missingYears);
+                allData.push(...missingData);
+            }
+            
+            // 生成未来年份（2026年及以后）
+            const futureYears = [];
+            if (allYears.length > 0) {
+                const lastYear = allYears[allYears.length - 1];
+                for (let i = 1; i <= futureForecasts.length; i++) {
+                    futureYears.push(lastYear + i);
+                }
+            } else {
+                // 如果没有历史数据，使用当前年份作为起点
+                for (let i = 1; i <= futureForecasts.length; i++) {
+                    futureYears.push(currentYear + i - 1);
+                }
+            }
+            
+            // 准备系列数据
+            const series = [
+                {
+                    name: '历史数据',
+                    type: 'bar',
+                    data: allData.length > 0 ? allData : [0],
+                    itemStyle: {
+                        color: '#667eea'
+                    }
+                },
+                {
+                    name: '趋势线',
+                    type: 'line',
+                    data: allData.length > 0 ? allData : [0],
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    lineStyle: {
+                        color: '#764ba2'
+                    }
+                }
+            ];
+            
+            // 添加预测数据
+            if (futureForecasts.length > 0) {
+                // 为预测数据创建数据数组，前面填充null
+                const forecastData = [...new Array(allData.length).fill(null), ...futureForecasts];
+                
+                // 添加预测数据的直方图
+                series.push({
+                    name: '预测数据',
+                    type: 'bar',
+                    data: forecastData,
+                    itemStyle: {
+                        color: '#764ba2'
+                    }
+                });
+                
+                // 添加预测数据的折线图，并与实际值的折线图连接
+                const combinedData = [...allData, ...futureForecasts];
+                series.push({
+                    name: '预测趋势线',
+                    type: 'line',
+                    data: combinedData,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    lineStyle: {
+                        color: '#764ba2',
+                        type: 'dashed'
+                    }
+                });
+                
+                // 如果预测年份为1，添加2026年的绿色点
+                if (futureForecasts.length === 1 && futureYears[0] === currentYear) {
+                    series.push({
+                        name: '2026年预测',
+                        type: 'scatter',
+                        data: forecastData.map((value, index) => {
+                            if (index === allData.length && value !== null) {
+                                return value;
+                            }
+                            return null;
+                        }),
+                        symbol: 'circle',
+                        symbolSize: 10,
+                        itemStyle: {
+                            color: '#4CAF50'
+                        }
+                    });
+                }
+            }
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: series.map(item => item.name)
+                },
+                xAxis: {
+                    type: 'category',
+                    data: [...allYears, ...futureYears].length > 0 ? [...allYears, ...futureYears] : ['暂无数据']
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '专利数量'
+                },
+                series: series
+            };
+            
+            trendChart.setOption(option);
+        }
+        
+
+
+        // 更新技术领域图表
+        function updateDomainChart(data) {
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a}<br/>{b}: {c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    right: 10,
+                    top: 'center'
+                },
+                series: [{
+                    name: '专利数量',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['40%', '50%'],
+                    data: data.map(item => ({
+                        value: item.patent_count,
+                        name: item.domain_name
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            window.domainChart.setOption(option);
+        }
+
+        // 更新申请人图表
+        function updateApplicantChart(data) {
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value'
+                },
+                yAxis: {
+                    type: 'category',
+                    data: data.map(item => item.name).slice(0, 10).reverse()
+                },
+                series: [{
+                    name: '专利数量',
+                    type: 'bar',
+                    data: data.map(item => item.patent_count).slice(0, 10).reverse(),
+                    itemStyle: {
+                        color: function(params) {
+                            const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'];
+                            return colors[params.dataIndex % colors.length];
+                        }
+                    }
+                }]
+            };
+            window.applicantChart.setOption(option);
+        }
+
+        // 更新类型图表
+        function updateTypeChart(patents) {
+            const typeCount = {};
+            patents.forEach(p => {
+                const type = p.patent_type || '未知';
+                typeCount[type] = (typeCount[type] || 0) + 1;
+            });
+
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c} ({d}%)'
+                },
+                series: [{
+                    name: '专利类型',
+                    type: 'pie',
+                    radius: '50%',
+                    data: Object.entries(typeCount).map(([name, value]) => ({
+                        name, value
+                    })),
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+            window.typeChart.setOption(option);
+        }
+
+        // 加载技术领域选项
+        async function loadDomainOptions() {
+            try {
+                const response = await fetch(`${API_BASE}/api/domain-statistics`);
+                const data = await response.json();
+                
+                console.log('获取到的领域数据:', data);
+                
+                const select = document.getElementById('domain');
+                const forecastSelect = document.getElementById('forecast-domain');
+                
+                if (select) {
+                    data.forEach(domain => {
+                        // 为检索模块添加选项
+                        const option = document.createElement('option');
+                        option.value = domain.domain_name;
+                        option.textContent = domain.domain_name;
+                        select.appendChild(option);
+                        console.log('添加领域选项:', domain.domain_name);
+                    });
+                }
+                
+                if (forecastSelect) {
+                    data.forEach(domain => {
+                        // 为预测模块添加选项
+                        const forecastOption = document.createElement('option');
+                        forecastOption.value = domain.domain_name;
+                        forecastOption.textContent = domain.domain_name;
+                        forecastSelect.appendChild(forecastOption);
+                    });
+                }
+            } catch (error) {
+                console.error('加载领域选项失败:', error);
+            }
+        }
+
+        // 搜索专利
+        async function searchPatents(page = 1) {
+            try {
+                currentPage = page;
+                
+                const params = new URLSearchParams({
+                    page: page,
+                    size: pageSize,
+                    keyword: document.getElementById('keyword').value,
+                    domain: document.getElementById('domain').value
+                });
+
+                const response = await fetch(`${API_BASE}/api/patents?${params}`);
+                if (!response.ok) throw new Error('搜索失败');
+                
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('搜索错误:', error);
+                alert('搜索失败');
+            }
+        }
+
+        // 显示搜索结果
+        function displayResults(data) {
+            const tbody = document.getElementById('results');
+            const info = document.getElementById('result-info');
+            
+            tbody.innerHTML = '';
+            info.textContent = `共 ${data.pagination?.total || 0} 条记录`;
+
+            if (!data.patents || data.patents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">未找到相关专利</td></tr>';
+                return;
+            }
+
+            data.patents.forEach(patent => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${patent.publication_number || 'N/A'}</td>
+                    <td>${patent.title || 'N/A'}</td>
+                    <td>${patent.publication_date || 'N/A'}</td>
+                    <td>${patent.technology_domain || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showDetail('${patent.publication_number}')">
+                            详情
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            setupPagination(data.pagination);
+        }
+
+        // 设置分页
+        function setupPagination(pagination) {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+
+            if (!pagination) return;
+
+            const { page, pages } = pagination;
+
+            // 上一页
+            if (page > 1) {
+                container.innerHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="searchPatents(${page - 1})">上一页</a>
+                </li>`;
+            }
+
+            // 页码
+            for (let i = Math.max(1, page - 2); i <= Math.min(pages, page + 2); i++) {
+                container.innerHTML += `<li class="page-item ${i === page ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="searchPatents(${i})">${i}</a>
+                </li>`;
+            }
+
+            // 下一页
+            if (page < pages) {
+                container.innerHTML += `<li class="page-item">
+                    <a class="page-link" href="#" onclick="searchPatents(${page + 1})">下一页</a>
+                </li>`;
+            }
+        }
+
+        // 显示专利详情
+        async function showDetail(pubNumber) {
+            try {
+                const response = await fetch(`${API_BASE}/api/patent/${pubNumber}`);
+                const patent = await response.json();
+
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>公开号：</strong>${patent.publication_number}</p>
+                            <p><strong>标题：</strong>${patent.title}</p>
+                            <p><strong>公开日：</strong>${patent.publication_date}</p>
+                            <p><strong>技术领域：</strong>${patent.domain_name}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>申请人：</strong>${patent.original_applicants || 'N/A'}</p>
+                            <p><strong>发明人：</strong>${patent.original_inventors || 'N/A'}</p>
+                            <p><strong>IPC分类：</strong>${patent.original_ipc || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>摘要：</strong>
+                        <p>${patent.abstract || '无摘要信息'}</p>
+                    </div>
+                `;
+
+                new bootstrap.Modal(document.getElementById('detailModal')).show();
+
+            } catch (error) {
+                alert('加载详情失败');
+            }
+        }
+
+        // 加载图表数据
+        async function loadChartsData() {
+            try {
+                const [ipcRes, patentsRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/ipc-analysis`),
+                    fetch(`${API_BASE}/api/patents?size=100`)
+                ]);
+
+                const [ipcData, patentsData] = await Promise.all([
+                    ipcRes.json(),
+                    patentsRes.json()
+                ]);
+
+                updateIpcChart(ipcData);
+                updateTypeChart(patentsData.patents);
+
+            } catch (error) {
+                console.error('图表数据加载失败:', error);
+            }
+        }
+
+        // 更新IPC图表
+        function updateIpcChart(data) {
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c}'
+                },
+                series: [{
+                    type: 'treemap',
+                    data: data.map(item => ({
+                        name: item.ipc_code || item.name,
+                        value: item.patent_count
+                    }))
+                }]
+            };
+            window.ipcChart.setOption(option);
+        }
+
+        // 窗口调整大小时重绘图表
+        window.addEventListener('resize', function() {
+            if (window.domainChart) window.domainChart.resize();
+            if (window.applicantChart) window.applicantChart.resize();
+            if (window.typeChart) window.typeChart.resize();
+            if (window.ipcChart) window.ipcChart.resize();
+            if (window.networkChart) window.networkChart.resize();
+            if (window.forecastChart) window.forecastChart.resize();
+        });
+
+        // ===================== 新增模块功能 =====================
+
+        // 数据导入 - 文件选择处理
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            selectedFile = file;
+            
+            // 显示文件信息
+            document.getElementById('file-info').style.display = 'block';
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = formatFileSize(file.size);
+            
+            // 启用上传按钮
+            document.getElementById('upload-btn').disabled = false;
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // 数据导入 - 上传文件
+        async function uploadFile() {
+
+             console.log('开始上传文件');
+             if (!selectedFile) return;
+    
+             const progressBar = document.getElementById('progress-bar');
+             const progressText = document.getElementById('progress-text');
+             const uploadProgress = document.getElementById('upload-progress');
+    
+             uploadProgress.style.display = 'block';
+             progressBar.style.width = '0%';
+             progressText.textContent = '导入中... 0%';
+    
+             try {
+
+                 const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('domain_id', document.getElementById('domain-select').value);
+        
+                 let progress = 0;
+                 const progressInterval = setInterval(() => {
+                     progress += Math.random() * 10;
+                     if (progress > 90) progress = 90;
+                     progressBar.style.width = `${progress}%`;
+                     progressBar.setAttribute('aria-valuenow', progress);
+                     progressText.textContent = `导入中... ${Math.round(progress)}%`;
+                 }, 300);
+        
+        // ✅ 正确 API
+                 console.log('调用后端API');
+                 const response = await fetch('http://127.0.0.1:5001/api/import/excel', {
+                     method: 'POST',
+                     body: formData
+                 });
+        
+                 const result = await response.json();
+                 console.log('API返回结果:', result);
+        
+                 clearInterval(progressInterval);
+                 progressBar.style.width = '100%';
+                 progressBar.setAttribute('aria-valuenow', 100);
+                 progressText.textContent = '导入完成！100%';
+        
+                 setTimeout(() => {
+                 if (result.code === 200) {
+                     alert(`数据导入成功！共${result.data.patent_count}条数据`);
+                     loadImportHistory(); 
+                 } else {
+                     alert(`数据导入失败：${result.msg}`);
+                     }
+                 resetUpload();
+             }, 1000);
+        
+         } catch (error) {
+             console.error('文件上传失败:', error);
+             clearInterval(progressInterval);
+              progressText.textContent = '导入失败！';
+             progressBar.classList.add('bg-danger');
+             alert('数据导入失败，请重试！');
+    }
+}
+
+        // 数据导入 - 重置上传
+        function resetUpload() {
+            selectedFile = null;
+            document.getElementById('file-upload').value = '';
+            document.getElementById('file-info').style.display = 'none';
+            document.getElementById('upload-btn').disabled = true;
+            document.getElementById('upload-progress').style.display = 'none';
+            
+            // 重置进度条样式
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = '0%';
+            progressBar.setAttribute('aria-valuenow', 0);
+            progressBar.classList.remove('bg-danger');
+        }
+
+        // 数据导入 - 删除导入记录
+        async function deleteImportRecord(id) {
+            if (confirm('确定要删除这条导入记录及其相关的专利数据吗？此操作不可恢复！')) {
+                try {
+                    const response = await fetch(`http://127.0.0.1:5001/api/import/delete/${id}`, {
+                        method: 'DELETE'
+                    });
+                    const result = await response.json();
+                    
+                    if (result.code === 200) {
+                        alert(result.msg);
+                        // 刷新导入历史
+                        loadImportHistory();
+                    } else {
+                        alert(`删除失败：${result.msg}`);
+                    }
+                } catch (error) {
+                    console.error('删除导入记录失败:', error);
+                    alert('删除导入记录失败，请重试！');
+                }
+            }
+        }
+        
+        // 导入单个专利
+        async function importSinglePatent() {
+            const patentNumber = document.getElementById('patent-number').value;
+            const patentTitle = document.getElementById('patent-title').value;
+            const technologyDomain = document.getElementById('technology-domain').value;
+            const applicationYear = document.getElementById('application-year').value;
+            const impactIndex = document.getElementById('impact-index').value;
+            const applicant = document.getElementById('applicant').value;
+            const citationList = document.getElementById('citation-list').value;
+            const patentAbstract = document.getElementById('patent-abstract').value;
+            
+            // 验证必填字段
+            if (!patentNumber || !patentTitle || !technologyDomain || !applicationYear) {
+                alert('请填写所有必填字段！');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/import/single', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        publication_number: patentNumber,
+                        title: patentTitle,
+                        technology_domain: technologyDomain,
+                        publication_date: `${applicationYear}-01-01`, // 简化处理，使用年份的第一天
+                        applicant: applicant,
+                        abstract: patentAbstract,
+                        citation: citationList
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    alert('单个专利导入成功！');
+                    // 清空表单
+                    document.getElementById('single-import-form').reset();
+                    // 刷新导入历史
+                    loadImportHistory();
+                } else {
+                    alert(`导入失败：${result.msg}`);
+                }
+            } catch (error) {
+                console.error('导入单个专利失败:', error);
+                alert('导入失败，请重试！');
+            }
+        }
+        
+        // 加载导入历史记录
+        async function loadImportHistory() {
+            console.log('开始加载导入历史');
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/import/history');
+                console.log('历史API响应:', response);
+                const result = await response.json();
+                console.log('历史API返回结果:', result);
+                
+                if (result.code === 200) {
+                    const history = result.data;
+                    console.log('历史记录数据:', history);
+                    const tbody = document.getElementById('import-history-body');
+                    console.log('找到tbody元素:', tbody);
+                    
+                    // 清空表格
+                    tbody.innerHTML = '';
+                    
+                    // 填充数据
+                    history.forEach(item => {
+                        console.log('处理历史记录:', item);
+                        const row = document.createElement('tr');
+                        const typeClass = item.import_type === 'excel' ? 'bg-primary' : 'bg-success';
+                        const typeText = item.import_type === 'excel' ? 'Excel' : '单个';
+                        
+                        row.innerHTML = `
+                            <td>${item.import_time}</td>
+                            <td>${item.file_name}</td>
+                            <td>${item.data_count} 条</td>
+                            <td>${item.domain_name}</td>
+                            <td><span class="badge ${typeClass}">${typeText}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info me-2" onclick="showImportDetail(${item.id})"><i class="bi bi-info-circle"></i> 详情</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteImportRecord(${item.id})"><i class="bi bi-trash"></i> 删除</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('加载导入历史失败:', error);
+            }
+        }
+        
+        // 显示导入详情
+        async function showImportDetail(importId) {
+            console.log('显示导入详情:', importId);
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/api/import/detail/${importId}`);
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    const detail = result.data;
+                    console.log('导入详情:', detail);
+                    
+                    // 创建详情模态框
+                    const modalHtml = `
+                        <div class="modal fade" id="importDetailModal" tabindex="-1" aria-labelledby="importDetailModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="importDetailModalLabel">导入详情 - ${detail.file_name}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <strong>导入ID:</strong> ${detail.import_id}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>文件名:</strong> ${detail.file_name}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>技术领域:</strong> ${detail.domain_id}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>专利数量:</strong> ${detail.patents.length} 条
+                                        </div>
+                                        <hr>
+                                        <h6>专利列表</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>专利号</th>
+                                                        <th>专利名称</th>
+                                                        <th>公开日期</th>
+                                                        <th>专利权人</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${detail.patents.map(patent => `
+                                                        <tr>
+                                                            <td>${patent['公开公告号']}</td>
+                                                            <td>${patent['发明名称']}</td>
+                                                            <td>${patent['公开公告日']}</td>
+                                                            <td>${patent['申请专利权人']}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加到页面
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    
+                    // 显示模态框
+                    const modal = new bootstrap.Modal(document.getElementById('importDetailModal'));
+                    modal.show();
+                    
+                    // 模态框关闭后移除
+                    document.getElementById('importDetailModal').addEventListener('hidden.bs.modal', function() {
+                        this.remove();
+                    });
+                } else {
+                    alert(`获取导入详情失败：${result.msg}`);
+                }
+            } catch (error) {
+                console.error('获取导入详情失败:', error);
+                alert('获取导入详情失败，请重试！');
+            }
+        }
+        
+        // 删除导入记录
+        async function deleteImportRecord(importId) {
+            console.log('删除导入记录:', importId);
+            if (!confirm('确定要删除这条导入记录及其相关的专利数据吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:5001/api/import/delete/${importId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    alert(result.msg);
+                    // 刷新导入历史
+                    loadImportHistory();
+                } else {
+                    alert(`删除失败：${result.msg}`);
+                }
+            } catch (error) {
+                console.error('删除导入记录失败:', error);
+                alert('删除导入记录失败，请重试！');
+            }
+        }
+
+
+
+        // 趋势预测 - 生成预测图表
+        function generateForecast() {
+            const domain = document.getElementById('forecast-domain').value || '人工智能';
+            const period = document.getElementById('forecast-period').value;
+            const model = document.getElementById('forecast-model').value;
+            
+            console.log(`使用${model}模型预测${domain}领域未来${period}个月趋势`);
+            
+            // 生成历史数据和预测数据
+            const months = [];
+            const historyData = [];
+            const forecastData = [];
+            const lowerData = [];
+            const upperData = [];
+            
+            // 生成12个月历史数据
+            for (let i = 11; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(date.getMonth() - i);
+                months.push(`${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`);
+                historyData.push(35 + Math.random() * 10 + i * 1.5);
+            }
+            
+            // 生成预测数据
+            const forecastMonths = parseInt(period);
+            for (let i = 0; i < forecastMonths; i++) {
+                const date = new Date();
+                date.setMonth(date.getMonth() + i + 1);
+                months.push(`${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`);
+                
+                const baseValue = historyData[historyData.length - 1] + (i + 1) * 1.8;
+                const randomFactor = Math.random() * 3;
+                
+                forecastData.push(baseValue + randomFactor);
+                lowerData.push(baseValue - randomFactor * 2);
+                upperData.push(baseValue + randomFactor * 2);
+                
+                // 为历史数据填充空值（用于图表对齐）
+                if (i === 0) {
+                    historyData.push(null);
+                } else {
+                    historyData.push(null);
+                }
+            }
+            
+            // 配置预测图表
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: ['历史数据', '预测值', '置信区间'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: months
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '专利数量'
+                },
+                series: [
+                    {
+                        name: '历史数据',
+                        type: 'line',
+                        data: historyData,
+                        smooth: true,
+                        lineStyle: {
+                            width: 2
+                        },
+                        itemStyle: {
+                            color: '#5470c6'
+                        },
+                        markPoint: {
+                            data: [
+                                {type: 'max', name: '最大值'},
+                                {type: 'min', name: '最小值'}
+                            ]
+                        }
+                    },
+                    {
+                        name: '预测值',
+                        type: 'line',
+                        data: historyData.map((v, i) => i < 12 ? null : forecastData[i - 12]),
+                        smooth: true,
+                        lineStyle: {
+                            width: 2,
+                            type: 'dashed'
+                        },
+                        itemStyle: {
+                            color: '#ee6666'
+                        }
+                    },
+                    {
+                        name: '置信区间',
+                        type: 'area',
+                        data: historyData.map((v, i) => i < 12 ? null : [lowerData[i - 12], upperData[i - 12]]),
+                        itemStyle: {
+                            color: 'rgba(250, 204, 21, 0.2)'
+                        },
+                        lineStyle: {
+                            width: 0
+                        },
+                        emphasis: {
+                            focus: 'series'
+                        }
+                    }
+                ]
+            };
+            
+            window.forecastChart.setOption(option);
+        }
+
+        // 可视化网络模块
+        // 加载网络技术领域选项
+        async function loadNetworkDomainOptions() {
+            try {
+                const response = await fetch('http://127.0.0.1:5006/api/network/get_domains');
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    const select = document.getElementById('network-domain');
+                    select.innerHTML = '';
+                    
+                    data.data.forEach(domain => {
+                        const option = document.createElement('option');
+                        option.value = domain.id;
+                        option.textContent = domain.domain_name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载技术领域选项失败:', error);
+            }
+        }
+
+        async function generateNetwork() { 
+             const domainId = parseInt(document.getElementById('network-domain').value); 
+             const nodeCount = document.getElementById('network-level').value; 
+              
+             try { 
+                 const response = await fetch('http://127.0.0.1:5006/api/network/get_data', { 
+                     method: 'POST', 
+                     headers: { 
+                         'Content-Type': 'application/json' 
+                     }, 
+                     body: JSON.stringify({ 
+                         domain_id: domainId, 
+                         relation_level: 1 // 固定为1级关联
+                     }) 
+                 }); 
+                 
+                 const data = await response.json(); 
+                 
+                 if (data.code === 200) {
+                     let nodes = data.data.nodes;
+                     let links = data.data.links;
+                     
+                     console.log('后端返回的节点数据:', nodes);
+                     console.log('后端返回的边数据:', links);
+                     
+                     // 识别根节点（引用节点，即边的target）
+                     const rootNodeIds = new Set();
+                     links.forEach(link => {
+                         rootNodeIds.add(link.target);
+                     });
+                     
+                     // 根据选择的根节点数量筛选
+                     if (nodeCount !== 'all') {
+                         const count = parseInt(nodeCount);
+                         if (rootNodeIds.size > count) {
+                             // 随机选择指定数量的根节点
+                             const shuffledRootNodes = [...rootNodeIds].sort(() => 0.5 - Math.random());
+                             const selectedRootNodeIds = new Set(shuffledRootNodes.slice(0, count));
+                             
+                             // 筛选与选中根节点相关的所有边
+                             const filteredLinks = links.filter(link => 
+                                 selectedRootNodeIds.has(link.target)
+                             );
+                             
+                             // 收集所有与选中根节点相关的节点（包括被引节点）
+                             const relatedNodeIds = new Set();
+                             filteredLinks.forEach(link => {
+                                 relatedNodeIds.add(link.source);
+                                 relatedNodeIds.add(link.target);
+                             });
+                             
+                             // 筛选相关节点
+                             const filteredNodes = nodes.filter(node => 
+                                 relatedNodeIds.has(node.id || node.label)
+                             );
+                             
+                             nodes = filteredNodes;
+                             links = filteredLinks;
+                             
+                             console.log(`随机筛选了${count}个根节点，相关节点数: ${nodes.length}，相关边数: ${links.length}`);
+                         }
+                     }
+                     
+                     renderNetwork(nodes, links);
+                 } else {
+                     alert(`获取网络数据失败：${data.msg}`);
+                 }
+             } catch (error) {
+                 console.error('生成网络失败:', error);
+                 alert('生成网络失败，请重试！');
+             }
+         } 
+          
+         // 获取领域名称 
+         function getDomainName(domainId) { 
+             const domainNames = [ 
+                 '全领域', 
+                 '人工智能', 
+                 '区块链', 
+                 '大数据', 
+                 '云计算', 
+                 '5G', 
+                 '量子计算', 
+                 '物联网' 
+             ]; 
+             return domainNames[domainId] || '未知领域'; 
+         } 
+          
+         // 初始化网络图表
+         function initNetworkChart() {
+             // 网络图表会在generateNetwork函数中动态创建
+         }
+
+         // 初始化趋势预测图表
+         function initForecastChart() {
+             // 趋势预测图表会在predictTrend函数中动态创建
+         }
+
+         // 渲染网络
+         function renderNetwork(nodes, links) {
+             const networkChart = echarts.init(document.getElementById('network-chart'));
+             
+             // 为不同领域的节点设置不同颜色
+             const domainColors = [
+                 '#FF6B6B', // 全领域 - 红色
+                 '#4ECDC4', // 人工智能 - 青色
+                 '#45B7D1', // 区块链 - 蓝色
+                 '#96CEB4', // 大数据 - 绿色
+                 '#FFEAA7', // 云计算 - 黄色
+                 '#DDA0DD', // 5G - 紫色
+                 '#98D8C8', // 量子计算 - 浅蓝色
+                 '#F7DC6F'  // 物联网 - 金黄色
+             ];
+             
+             // 分析节点角色：引用节点（target）和被引节点（source）
+             const targetNodes = new Set();
+             links.forEach(link => {
+                 targetNodes.add(link.target); // target是引用节点
+             });
+             
+             // 调大节点大小，为每个节点设置颜色
+             nodes.forEach(node => {
+                 // 根据节点角色设置大小和颜色
+                 if (targetNodes.has(node.id || node.label)) {
+                     // 引用节点：黄色大节点
+                     console.log('节点:', node.label, '是引用节点，设置为黄色大节点');
+                     node.symbolSize = 50; // 大节点
+                     node.itemStyle = {
+                         color: '#FFEAA7' // 黄色
+                     };
+                 } else {
+                     // 被引节点：蓝色小节点
+                     console.log('节点:', node.label, '是被引节点，设置为蓝色小节点');
+                     node.symbolSize = 20; // 小节点
+                     node.itemStyle = {
+                         color: '#45B7D1' // 蓝色
+                     };
+                 }
+             });
+             
+             // 确保边是有向的，带箭头
+             links.forEach(link => {
+                 link.symbol = ['none', 'arrow'];
+                 link.symbolSize = [0, 8];
+             });
+             
+             // 生成节点标签格式化函数
+             function nodeLabelFormatter(params) {
+                 // 所有节点只显示专利号
+                 return params.data.label;
+             }
+             
+             // 生成tooltip格式化函数
+             function tooltipFormatter(params) {
+                 if (params.dataType === 'node') {
+                     // 检查是否是引用节点（根节点）
+                     if (targetNodes.has(params.data.id || params.data.label)) {
+                         // 根节点显示详细信息
+                         let tooltip = `<div style="font-weight: bold; margin-bottom: 5px;">专利号: ${params.data.label}</div>`;
+                         
+                         // 显示其他详细信息
+                         if (params.data.patentInfo) {
+                             const info = params.data.patentInfo;
+                             tooltip += `<div>发明名称: ${info.title || ''}</div>`;
+                             tooltip += `<div>公开公告日: ${info.pubDate || ''}</div>`;
+                             tooltip += `<div>申请专利权人: ${info.applicant || ''}</div>`;
+                             tooltip += `<div>发明人: ${info.inventor || ''}</div>`;
+                             tooltip += `<div>IPC分类号: ${info.ipc || ''}</div>`;
+                         }
+                         
+                         return tooltip;
+                     } else {
+                         // 被引节点只显示专利号
+                         return `专利号: ${params.data.label}`;
+                     }
+                 } else if (params.dataType === 'edge') {
+                     return '引用关系';
+                 }
+                 return params.name;
+             }
+             
+             const option = {
+                 tooltip: {
+                     trigger: 'item',
+                     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                     borderColor: '#ccc',
+                     borderWidth: 1,
+                     padding: 10,
+                     formatter: tooltipFormatter
+                 },
+                 series: [{
+                     type: 'graph',
+                     layout: 'force',
+                     data: nodes,
+                     links: links,
+                     roam: true,
+                     label: {
+                         show: true,
+                         position: 'right',
+                         formatter: nodeLabelFormatter,
+                         fontSize: 10
+                     },
+                     lineStyle: {
+                         color: 'source',
+                         curveness: 0, // 改为直线
+                         width: 1
+                     },
+                     emphasis: {
+                         focus: 'adjacency',
+                         lineStyle: {
+                             width: 2
+                         }
+                     },
+                     force: { 
+                         repulsion: 50000, // 增加排斥力，使节点分布更均匀
+                         edgeLength: 50, // 适当增加边长度，避免节点过于拥挤
+                         gravity: 0.1, // 减小引力，使节点分布更分散
+                         layoutAnimation: true, // 启用布局动画
+                         friction: 0.1 // 减小摩擦力，使节点更容易移动到稳定位置
+                     }
+                 }]
+             };
+             
+             networkChart.setOption(option);
+             window.addEventListener('resize', () => networkChart.resize());
+         }
+    </script>
+</body>
+</html>
