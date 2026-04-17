@@ -16,6 +16,14 @@
     {
       "src": "backend/trend_prediction.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -37,7 +45,11 @@
     },
     {
       "src": "/",
-      "dest": "backend/app.py"
+      "dest": "frontend/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
     }
   ]
 }
