@@ -1,0 +1,7 @@
+Flask
+Flask-CORS
+SQLAlchemy
+pymysql
+pandas
+scikit-learn
+jieba

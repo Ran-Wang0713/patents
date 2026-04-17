@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "backend/import_api.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "backend/network_visualization.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "backend/trend_prediction.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(patents|patent|domain-statistics|trend-analysis|applicant-ranking|ipc-analysis|similar-patents)",
+      "dest": "backend/app.py"
+    },
+    {
+      "src": "/api/import/(excel|history)",
+      "dest": "backend/import_api.py"
+    },
+    {
+      "src": "/api/network/(get_data|get_domains)",
+      "dest": "backend/network_visualization.py"
+    },
+    {
+      "src": "/api/trend/(predict)",
+      "dest": "backend/trend_prediction.py"
+    },
+    {
+      "src": "/",
+      "dest": "backend/app.py"
+    }
+  ]
+}
