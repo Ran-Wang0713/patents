@@ -563,7 +563,7 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script>
         // 配置
-        const API_BASE = 'http://127.0.0.1:5000';
+        const API_BASE = 'https://patentsnetwork.vercel.app';
         let currentPage = 1;
         const pageSize = 10;
         let selectedFile = null;
@@ -734,7 +734,7 @@
             const forecastYears = parseInt(yearSelect.value) || 1;
             
             console.log("=== 趋势预测请求调试 ===");
-            console.log("请求URL:", "http://127.0.0.1:5005/api/trend/predict");
+            console.log("请求URL:", "https://patentsnetwork.vercel.app/api/trend/predict");
             console.log("请求参数:", { domain_id: domainId, forecast_years: forecastYears });
             
             try {
@@ -742,7 +742,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
                 
-                const response = await fetch("http://127.0.0.1:5005/api/trend/predict", {
+                const response = await fetch("https://patentsnetwork.vercel.app/api/trend/predict", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -1322,7 +1322,7 @@
         
         // ✅ 正确 API
                  console.log('调用后端API');
-                 const response = await fetch('http://127.0.0.1:5001/api/import/excel', {
+                 const response = await fetch('https://patentsnetwork.vercel.app/api/import/excel', {
                      method: 'POST',
                      body: formData
                  });
@@ -1373,7 +1373,7 @@
         async function deleteImportRecord(id) {
             if (confirm('确定要删除这条导入记录及其相关的专利数据吗？此操作不可恢复！')) {
                 try {
-                    const response = await fetch(`http://127.0.0.1:5001/api/import/delete/${id}`, {
+                    const response = await fetch(`https://patentsnetwork.vercel.app/api/import/delete/${id}`, {
                         method: 'DELETE'
                     });
                     const result = await response.json();
@@ -1410,7 +1410,7 @@
             }
             
             try {
-                const response = await fetch('http://127.0.0.1:5001/api/import/single', {
+                const response = await fetch('https://patentsnetwork.vercel.app/api/import/single', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1447,7 +1447,7 @@
         async function loadImportHistory() {
             console.log('开始加载导入历史');
             try {
-                const response = await fetch('http://127.0.0.1:5001/api/import/history');
+                const response = await fetch('https://patentsnetwork.vercel.app/api/import/history');
                 console.log('历史API响应:', response);
                 const result = await response.json();
                 console.log('历史API返回结果:', result);
@@ -1491,7 +1491,7 @@
         async function showImportDetail(importId) {
             console.log('显示导入详情:', importId);
             try {
-                const response = await fetch(`http://127.0.0.1:5001/api/import/detail/${importId}`);
+                const response = await fetch(`https://patentsnetwork.vercel.app/api/import/detail/${importId}`);
                 const result = await response.json();
                 
                 if (result.code === 200) {
@@ -1581,7 +1581,7 @@
             }
             
             try {
-                const response = await fetch(`http://127.0.0.1:5001/api/import/delete/${importId}`, {
+                const response = await fetch(`https://patentsnetwork.vercel.app/api/import/delete/${importId}`, {
                     method: 'DELETE'
                 });
                 const result = await response.json();
@@ -1728,7 +1728,7 @@
         // 加载网络技术领域选项
         async function loadNetworkDomainOptions() {
             try {
-                const response = await fetch('http://127.0.0.1:5006/api/network/get_domains');
+                const response = await fetch('https://patentsnetwork.vercel.app/api/network/get_domains');
                 const data = await response.json();
                 
                 if (data.code === 200) {
@@ -1752,7 +1752,7 @@
              const nodeCount = document.getElementById('network-level').value; 
               
              try { 
-                 const response = await fetch('http://127.0.0.1:5006/api/network/get_data', { 
+                 const response = await fetch('https://patentsnetwork.vercel.app/api/network/get_data', { 
                      method: 'POST', 
                      headers: { 
                          'Content-Type': 'application/json' 
